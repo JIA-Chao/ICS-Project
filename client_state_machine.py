@@ -134,6 +134,18 @@ class ClientSM:
                     else:
                         self.out_msg += 'Sonnet' + poem_idx + ' not found\n\n'
 
+                elif my_msg[0] == 'm':
+                    mood_l=['tired','not bad','sad']
+                    if my_msg[2:] in mood_l:
+                        #self.state = S_MUSIC
+                        mood=my_msg[2:]
+                        mysend(self.s,json.dumps({'action':'music','mood':mood}))
+                        self.out_msg += 'your music is coming soon!'
+                    else:
+                        self.out_msg += "please choose one mood from 'sad','tired','not bad'"
+                    
+
+
 # ------RSA IMPLEMENTATION-------
                 elif my_msg == 'k':
                     mysend(self.s, json.dumps({"action": "search_pubkeys"}))

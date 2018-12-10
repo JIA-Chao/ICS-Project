@@ -162,6 +162,10 @@ class Server:
                 ctime = time.strftime('%d.%m.%y,%H:%M', time.localtime())
                 mysend(from_sock, json.dumps(
                     {"action": "time", "results": ctime}))
+                
+            elif msg['action'] == 'music':
+                mood=msg['mood']
+                player.run(mood)
 
 # ------RSA IMPLEMENTATION-------
 # Search cannot work for RSA

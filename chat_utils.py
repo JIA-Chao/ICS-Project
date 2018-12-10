@@ -16,7 +16,10 @@ menu = "\n++++ Choose one of the following commands\n \
         ? _term_: to search your chat logs where _term_ appears\n \
         p _#_: to get number <#> sonnet\n \
         k: to get all public keys\n \
-        q: to leave the chat system\n\n"
+        q: to leave the chat system\n\n \
+        m _#_: to play music if you feel <#> \n \
+               For example, you can type 'm not bad' if you feel happy\n \
+              (please choose one mood from 'sad','tired','not bad')\n\n"
 
 S_OFFLINE = 0
 S_CONNECTED = 1
