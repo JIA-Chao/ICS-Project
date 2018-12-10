@@ -7,6 +7,7 @@ Created on Sun Apr  5 09:58:31 2015
 S_ALONE = 0
 S_TALKING = 1
 
+
 #==============================================================================
 # Group class:
 # member fields:
@@ -121,4 +122,4 @@ if __name__ == "__main__":
     print(g.list_all('a'))
     g.list_all2('a')
     g.connect('a', 'b')
-    print(g.list_all('b'))
+    print(g.list_me('b'))

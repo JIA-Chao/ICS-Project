@@ -2,11 +2,15 @@
 Created on Sun Apr  5 00:00:32 2015
 
 @author: zhengzhang
+@editted by Sara Xu and Jia Zhao
 """
 from chat_utils import *
 import json
 
-# import chat_group
+# ------RSA IMPLEMENTATION-------
+import RSA
+import en_de
+
 
 class ClientSM:
     def __init__(self, s):
@@ -17,7 +21,23 @@ class ClientSM:
         self.out_msg = ''
         self.s = s
 
-        # self.group = chat_group.Group()
+# ------RSA IMPLEMENTATION-------
+        self.peer_pubkeys = {}    # peer pubkeys while chatting
+        self.prikey = []    # client's prikey
+        self.pubkey = []   # client's pubkey
+
+    def set_pri(self, pri):
+        self.prikey = pri
+
+    def get_pri(self):
+        return self.prikey
+
+    def set_pub(self, pub):
+        self.pubkey = pub
+
+    def get_pub(self):
+        return self.pubkey
+# -------------------------------
 
     def set_state(self, state):
         self.state = state
@@ -32,13 +52,20 @@ class ClientSM:
         return self.me
 
     def connect_to(self, peer):
-        msg = json.dumps({"action": "connect", "target": peer})
+        # cpubkey: pubkey of the client who "c" others
+        msg = json.dumps({"action": "connect", "target": peer, "cpubkey": self.pubkey})
         mysend(self.s, msg)
         response = json.loads(myrecv(self.s))
         if response["status"] == "success":
             self.peer = peer
             self.out_msg += 'You are connected with ' + self.peer + '\n'
+
+# ------RSA IMPLEMENTATION-------
+            self.peer_pubkeys = response["pubkeys"]
+            self.out_msg += 'Peer pubkeys here:' + str(self.peer_pubkeys) + '\n'
+            self.out_msg += '-----------------------------------\n'
             return True
+
         elif response["status"] == "busy":
             self.out_msg += 'User is busy. Please try again later\n'
         elif response["status"] == "self":
@@ -53,15 +80,13 @@ class ClientSM:
         self.out_msg += 'You are disconnected from ' + self.peer + '\n'
         self.peer = ''
 
+# ------RSA IMPLEMENTATION-------
+        self.peer_pubkeys = {}
+
     def proc(self, my_msg, peer_msg):
         self.out_msg = ''
-#==============================================================================
-# Once logged in, do a few things: get peer listing, connect, search
-# And, of course, if you are so bored, just go
-# This is event handling in state "S_LOGGEDIN"
-#==============================================================================
+
         if self.state == S_LOGGEDIN:
-            # todo: can't deal with multiple lines yet
             if len(my_msg) > 0:
 
                 if my_msg == 'q':
@@ -89,17 +114,16 @@ class ClientSM:
                     else:
                         self.out_msg += 'Connection unsuccessful\n'
 
-                elif my_msg[0] == '?':
-                    term = my_msg[1:].strip()
-                    mysend(self.s, json.dumps({"action": "search", "target": term}))
-                    # print("Here")
-                    # print(self.s)
-                    # print(myrecv(self.s)) # dict {'results: ['memory', ' ', ' ']}
-                    search_rslt = json.loads(myrecv(self.s))["results"]  # result list
-                    if (len(search_rslt)) > 0:
-                        self.out_msg += str(search_rslt) + '\n\n'
-                    else:
-                        self.out_msg += '\'' + term + '\'' + ' not found\n\n'
+# ------RSA IMPLEMENTATION-------
+# Search cannot work for RSA
+#                 elif my_msg[0] == '?':
+#                     term = my_msg[1:].strip()
+#                     mysend(self.s, json.dumps({"action": "search", "target": term}))
+#                     search_rslt = json.loads(myrecv(self.s))["results"]  # result list
+#                     if (len(search_rslt)) > 0:
+#                         self.out_msg += str(search_rslt) + '\n\n'
+#                     else:
+#                         self.out_msg += '\'' + term + '\'' + ' not found\n\n'
 
                 elif my_msg[0] == 'p' and my_msg[1:].isdigit():
                     poem_idx = my_msg[1:].strip()
@@ -109,6 +133,13 @@ class ClientSM:
                         self.out_msg += poem + '\n\n'
                     else:
                         self.out_msg += 'Sonnet' + poem_idx + ' not found\n\n'
+
+# ------RSA IMPLEMENTATION-------
+                elif my_msg == 'k':
+                    mysend(self.s, json.dumps({"action": "search_pubkeys"}))
+                    all_keys = json.loads(myrecv(self.s))["results"]
+                    self.out_msg += "All Public Keys Here: "
+                    self.out_msg += str(all_keys)
 
                 else:
                     self.out_msg += menu
@@ -121,45 +152,56 @@ class ClientSM:
                     return self.out_msg
             
                 if peer_msg["action"] == "connect":
-
-                    # ----------your code here------#
                     self.peer = peer_msg["from"]
                     self.out_msg += '\n\n' + 'Request from ' + self.peer + '\n'
                     self.out_msg += 'You are connected with ' + self.peer + '. ' + 'Chat away!\n\n'
+# ------RSA IMPLEMENTATION-------
+                    # print(self.peer, peer_msg["cpubkey"])
+                    self.peer_pubkeys[self.peer] = peer_msg["cpubkey"]  # add peer's pubkey
+                    self.out_msg += "Peer Public Keys Here:" + str(self.peer_pubkeys) + '\n'
                     self.out_msg += '------------------------------------\n'
                     self.state = S_CHATTING
-                    # ----------end of your code----#
-                    
-#==============================================================================
-# Start chatting, 'bye' for quit
-# This is event handling in state "S_CHATTING"
-#==============================================================================
+
         elif self.state == S_CHATTING:
-            if len(my_msg) > 0:     # my stuff going out
-                mysend(self.s, json.dumps({"action": "exchange", "from": "[" + self.me + "]", "message": my_msg}))
+
+#------RSA IMPLEMENTATION-------
+# RSA ENCRYPTION AND DECRYPTION PART
+            if len(my_msg) > 0:
+                en_msg = en_de.encrypt(my_msg)
+                for name, pubkey in self.peer_pubkeys.items():
+                    rsa_msg = RSA.RSA_encrypt(en_msg, pubkey)
+                    # self.out_msg += 'RSA Msg Here:' + str(rsa_msg) + '\n'
+                    mysend(self.s, json.dumps({"action": "exchange", "from": "[" + self.me + "]",
+                                               "to": name, "message": rsa_msg}))
                 if my_msg == 'bye':
                     self.disconnect()
                     self.state = S_LOGGEDIN
                     self.peer = ''
-            if len(peer_msg) > 0:    # peer's stuff, coming in
+                    self.peer_pubkeys = {}
 
-                # ----------your code here--------- #
+            if len(peer_msg) > 0:
                 peer_msg = json.loads(peer_msg)
                 if peer_msg["action"] == "connect":
+                    self.peer = peer_msg["from"]
+                    self.peer_pubkeys[self.peer] = peer_msg["cpubkey"]
                     self.out_msg += "(" + peer_msg["from"] + " joined)\n"
                 elif peer_msg["action"] == "disconnect":
                     self.state = S_LOGGEDIN
+                    self.peer_pubkeys = {}
                 else:
-                    self.out_msg += peer_msg["from"] + " " + peer_msg["message"]
-                pass
-                # ----------end of your code--------- #
+                    # print('Msgs Before RSA Decryption:', peer_msg["message"])
+                    prikey = self.get_pri()
+                    # print('Your PriKey:', prikey)
+                    en_msg = RSA.RSA_decrypt(peer_msg["message"], prikey)
+                    # print('Msgs After RSA Decryption:', en_msg)
+                    de_msg = en_de.decrypt(en_msg)
+                    self.out_msg += peer_msg["from"] + " " + de_msg
+# ------------------------------------
                 
             # Display the menu again
             if self.state == S_LOGGEDIN:
                 self.out_msg += menu
-#==============================================================================
-# invalid state
-#==============================================================================
+
         else:
             self.out_msg += 'How did you wind up here??\n'
             print_state(self.state)

@@ -8,6 +8,8 @@ import client_state_machine as csm
 
 import threading
 
+# ---RSA---
+import RSA
 
 class Client:
     def __init__(self, args):
@@ -19,6 +21,15 @@ class Client:
         self.local_msg = ''
         self.peer_msg = ''
         self.args = args
+
+# ------RSA IMPLEMENTATION------
+# the client should have his own prikey stored here
+        self.rsakeys = {'pub': None, 'pri': None}
+        self.prikey = self.rsakeys['pri']
+        self.pubkey = self.rsakeys['pub']
+
+    def get_pri(self):
+        return self.prikey
 
     def quit(self):
         self.socket.shutdown(socket.SHUT_RDWR)
@@ -65,25 +76,35 @@ class Client:
         my_msg, peer_msg = self.get_msgs()
         if len(my_msg) > 0:
             self.name = my_msg
-            msg = json.dumps({"action": "login", "name": self.name})
+
+# ------RSA IMPLEMENTATION------
+# When login, generate RSA key pairs.
+# Store prikey here, pubkey both here and in the server.
+            self.rsakeys[self.name] = RSA.RSA_key()
+            self.prikey = self.rsakeys[self.name]['pri']
+            self.pubkey = self.rsakeys[self.name]['pub']
+            msg = json.dumps({"action": "login", "name": self.name, "pubkey": self.pubkey})
             self.send(msg)
             response = json.loads(self.recv())
             if response["status"] == 'ok':
                 self.state = S_LOGGEDIN
                 self.sm.set_state(S_LOGGEDIN)
-                self.sm.set_myname(self.name)
+                self.sm.set_myname(self.name)   # convey RSA key pairs to client_state_machine
+                self.sm.set_pri(self.prikey)
+                self.sm.set_pub(self.pubkey)
                 self.print_instructions()
                 return True
+# -------------------
             elif response["status"] == 'duplicate':
                 self.system_msg += 'Duplicate username, try again'
                 return False
-        else:               # fix: dup is only one of the reasons
+        else:
             return False
 
     def read_input(self):
         while True:
             text = sys.stdin.readline()[:-1]
-            self.console_input.append(text)  # no need for lock, append is thread safe
+            self.console_input.append(text)
 
     def print_instructions(self):
         self.system_msg += menu
@@ -103,9 +124,6 @@ class Client:
             time.sleep(CHAT_WAIT)
         self.quit()
 
-#==============================================================================
-# main processing loop
-#==============================================================================
     def proc(self):
         my_msg, peer_msg = self.get_msgs()
         self.system_msg += self.sm.proc(my_msg, peer_msg)
