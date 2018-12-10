@@ -31,25 +31,7 @@ def run(mood,index = [1]):
             
             print(filenames[i])
       
-            coco = eyed3.load(filenames[i])
-            total = int(coco.info.time_secs)
-            minute = int(coco.info.time_secs)//60
-            sec = int(coco.info.time_secs)%60
-            length = int(coco.info.time_secs)
-      
-            #name[media] = filenames[i].split("\\")[-1]
-            #name=filenames[i].split("\\")
-            #i =index[-1]
-            #list_name = Text(root,height =5,width =50)
-            #list_name.grid(row =0,column = 0,sticky = "n",rowspan =2)
-            #list_name.insert(END,str(i)+"."+name[-1])
-            #list_name.insert(END," "*6)
-            #if sec >=10:
-            #    list_name.insert(END,"0%d:%d" %(minute,sec)+ "\n")
-            #else:
-            #    list_name.insert(END,"0%s:0%d" %(minute,sec)+ "\n")
-            #i = i +1
-            #index.append(i)
+            
             
     def play(event = None):
   
@@ -140,7 +122,7 @@ def run(mood,index = [1]):
     vio_minus = Button(vioce_lab,width =8,text ="-",command = Volume_minus)
     vio_minus.grid(row =9,column =0,sticky ="e")
   
-    ctr_lab = LabelFrame(root,text = "play control",height =130)
+    ctr_lab = LabelFrame(root,text = "player control",height =130)
     ctr_lab.grid(row =0,column =1,rowspan =12,sticky = "ns")
     btn_play = Button(ctr_lab,text ="play",width =10,command = play)
     btn_play.grid(row =1,column =1,pady =5)
@@ -148,6 +130,8 @@ def run(mood,index = [1]):
     btn_stop.grid(row =2,column =1,pady =5)
     btn_pause = Button(ctr_lab,text ="pause",width =10,command = pause)
     btn_pause.grid(row =3,column =1,pady =5)
+    btn_pause = Button(ctr_lab,text ="exit",width =10,command = exitit)
+    btn_pause.grid(row =4,column =1,pady =5)
     
 
   
