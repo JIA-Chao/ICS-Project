@@ -2,7 +2,7 @@
 Created on Sun Apr  5 00:00:32 2015
 
 @author: zhengzhang
-@editted by Sara Xu and Jia Zhao
+@editted by Jingxian Xu and Jia Zhao
 """
 from chat_utils import *
 import json
@@ -133,7 +133,7 @@ class ClientSM:
                         self.out_msg += poem + '\n\n'
                     else:
                         self.out_msg += 'Sonnet' + poem_idx + ' not found\n\n'
-
+# --------------MUSIC----------------
                 elif my_msg[0] == 'm':
                     mood_l=['tired','not bad','sad']
                     if my_msg[2:] in mood_l:

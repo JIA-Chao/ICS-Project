@@ -1,7 +1,14 @@
+"""
+
+Author: Jingxian Xu
+(only supports windows system)
+
+"""
+
 from tkinter import *
 from traceback import *
 from win32com.client import Dispatch
-import time,eyed3,threading
+import threading
 import os
 import time
   
@@ -23,13 +30,13 @@ def run(mood,index = [1]):
         if files.endswith('.mp3'):
             realdir = os.path.realpath(files)
             filenames.append(realdir)
-    print(filenames)
+    #print(filenames)
     if filenames:
         for i in range(len(filenames)):
             media = wmp.newMedia(filenames[i])
             wmp.currentPlaylist.appendItem(media)
             
-            print(filenames[i])
+            #print(filenames[i])
       
             
             
@@ -139,6 +146,8 @@ def run(mood,index = [1]):
   
   
     root.mainloop()
+
+    
 if __name__=='__main__':
     mood='not bad'
     run(mood)

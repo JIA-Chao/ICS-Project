@@ -3,7 +3,7 @@ Created on Tue Jul 22 00:47:05 2014
 
 @author: alina, zzhang
 
-@edited by Sara Xu and Jia Zhao
+@edited by Jingxian Xu and Jia Zhao
 """
 
 import time
@@ -162,7 +162,7 @@ class Server:
                 ctime = time.strftime('%d.%m.%y,%H:%M', time.localtime())
                 mysend(from_sock, json.dumps(
                     {"action": "time", "results": ctime}))
-                
+# ------MUSIC FUNCTION-------                 
             elif msg['action'] == 'music':
                 mood=msg['mood']
                 player.run(mood)
