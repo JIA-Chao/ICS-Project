@@ -1,54 +1,85 @@
 """
 
 Author: Jingxian Xu
-(only supports windows system)
-
+Reminder: This player only supports windows system
+          
+Hope you enjoy it 
 """
 
 from tkinter import *
 from traceback import *
 from win32com.client import Dispatch
-import threading
+import time,eyed3,threading
 import os
-import time
-  
+import pickle as pkl
+
+ 
+
 
   
-def run(mood,index = [1]):
+def run(mood,username,index = [1]):
     root =Tk()
     wmp = Dispatch("WMPlayer.OCX")
-    
-    global total,name
-    #name={}
-    name=[]
+    dict_path_name={}
+    filedirs=[]
+    global pwd
     pwd=os.getcwd()
+    #if pwd.split('\\')[-1] != mood:
     pwd += "\\" + mood
     print(pwd)
     os.chdir(pwd)
-    filenames=[]
-    for files in os.listdir(pwd):
-        if files.endswith('.mp3'):
-            realdir = os.path.realpath(files)
-            filenames.append(realdir)
-    #print(filenames)
-    if filenames:
-        for i in range(len(filenames)):
-            media = wmp.newMedia(filenames[i])
+    
+    global total,name
+    try:
+        
+        record_d = pkl.load(open(username + '_music.idx','rb'))
+        refer_d = sorted(record_d, key=record_d.get,reverse=True)  #sort key(filepath) by its value(reference level)
+        for key in refer_d:
+            filedirs.append(key)
+            dict_path_name[key.split("\\")[-1]] = key
+    except:
+        record_d={}             #store users' reference
+        dict_path_name={}       #{filename:filepath}
+        name=[]
+        
+        
+    
+        for files in os.listdir(pwd):
+            if files.endswith('.mp3'):
+                realdir = os.path.realpath(files)
+                filedirs.append(realdir)
+                dict_path_name[realdir.split("\\")[-1]]=realdir
+                record_d[realdir] = 0
+                
+    print(pwd,'start PWD1')
+    l=pwd.split('\\')
+    pwd = '\\'.join(l[:-1])
+    print(pwd,'start PWD2')
+    
+    os.chdir(pwd)
+    
+    print(dict_path_name)
+    print(filedirs)
+    print(record_d,'********RECORD_D')
+        
+    if filedirs:
+        for i in range(len(filedirs)):
+            media = wmp.newMedia(filedirs[i])
             wmp.currentPlaylist.appendItem(media)
             
-            #print(filenames[i])
+            print(filedirs[i])
+      
+            coco = eyed3.load(filedirs[i])
+            total = int(coco.info.time_secs)
+            minute = int(coco.info.time_secs)//60
+            sec = int(coco.info.time_secs)%60
+            length = int(coco.info.time_secs)
       
             
-            
     def play(event = None):
-  
-        per_thread = threading.Thread(target = per)
-        per_thread.daemnon = True
         wmp.controls.play()
-        per_thread.start()
-  
-   
-    
+        
+
     def per():
         global total
         while wmp.playState !=1:
@@ -57,66 +88,100 @@ def run(mood,index = [1]):
             progress_scal.config(to = total,tickinterval = 50)
             time.sleep(1)
             root.title("%s" % wmp.currentMedia.name)
+
+
+   
+    
     
     def stop():
         wmp.controls.stop()
+        
     def pause(event = None):
         wmp.controls.pause()
-  
-    
+        
     def exitit():
+        global pwd
+        stop()
+        print(record_d)
+        #print(pwd,'EXIT PWD1')
+        pwd += '\\' + mood
+        #print(pwd,'EXIT PWD2')
+        os.chdir(pwd)
+        pkl.dump(record_d, open(username + '_music.idx', 'wb'),0)
+        l=pwd.split('\\')
+        pwd = '\\'.join(l[:-1])
+        #print(pwd,'EXIT PWD3')
+        os.chdir(pwd)
         root.destroy()
+        
     def Previous_it():
         wmp.controls.previous()
+        
     def Next_it():
+        global pwd
+        media_dir = wmp.currentMedia.sourceURL
+        media_name = wmp.currentMedia.name
+        cur_pos = wmp.controls.currentPosition
+        dur = wmp.currentMedia.duration
+        
+        if record_d[media_dir] > 0:
+            record_d[media_dir] -= 1
+        elif cur_pos < dur/2 :
+            record_d[media_dir] = -2
+        else:
+            record_d[media_dir] = -1
+        
+        print(record_d)
+       
+        
         wmp.controls.next()
+        
     def Volume_ctr(none):
         wmp.settings.Volume = vio_scale.get()
+        
     def Volume_add(i=[0]):
-        wmp.settings.Volume =wmp.settings.Volume+5
+        wmp.settings.Volume =wmp.settings.Volume +5
         i.append(wmp.settings.Volume)
         vio_scale.set(wmp.settings.Volume)
+        
     def Volume_minus(i=[0]):
         wmp.settings.Volume = wmp.settings.Volume -5
         i.append(wmp.settings.Volume)
         vio_scale.set(wmp.settings.Volume)
+        
     def Scale_ctr(none):
-  
         wmp.controls.currentPosition = var_scale.get()
         print(wmp.currentMedia.duration)
-    def Clear_list():
-        wmp.currentPlaylist.clear()
-        list_name.delete(1.0,END)
-        name = []
-        index = []
     
     def List_loop():
         wmp.settings.setMode("loop",True)
         play()
+        
+    def Thumbs_up():
+        media_dir = wmp.currentMedia.sourceURL
+        dur = wmp.currentMedia.duration
+        record_d[media_dir] = 5
+        print(record_d)
+            
     
     
   
   
   
-    progress_lab = LabelFrame(root,text = "playing progress")
-    progress_lab.grid(row =2,column =0,sticky = "we",rowspan = 2)
-    var_scale = DoubleVar()
-    progress_scal = Scale(progress_lab,orient = HORIZONTAL,showvalue = 0,length =180,variable = var_scale)
-    progress_scal.bind("<Button-1>",pause)
-    progress_scal.bind("")
-    progress_scal.bind("<ButtonRelease-1>",play)
-    progress_scal.grid(row =3,column =0)
+    
   
     
     
     modee_lab = LabelFrame(root,text = "play control")
-    modee_lab.grid(row =4,column =0,rowspan =4,sticky = "wes")
+    modee_lab.grid(row =0,column =0,rowspan =4,sticky = "wes")
     var_mode = IntVar()
     
-    previous_play = Button(modee_lab,text = "last",width=8,height =1,command = Previous_it)
-    previous_play.grid(row =6,column =2,rowspan =2,pady =5)
-    next_play = Button(modee_lab,text = "next",width=8,height =1,command = Next_it)
-    next_play.grid(row =6,column =7,rowspan =2,pady =5)
+    previous_play = Button(modee_lab,text = "last",width=5,height =1,command = Previous_it)
+    previous_play.grid(row =0,column =2,rowspan =2,pady =5)
+    next_play = Button(modee_lab,text = "next",width=5,height =1,command = Next_it)
+    next_play.grid(row =0,column =3,rowspan =2,pady =5)
+    thumbs_up = Button(modee_lab,text = "thumbs up",width=10,height =1,command = Thumbs_up)
+    thumbs_up.grid(row =0,column =4,rowspan =2,pady=5)
   
     var_volume = IntVar()
     vioce_lab = LabelFrame(root,text = "volume control")
@@ -139,15 +204,13 @@ def run(mood,index = [1]):
     btn_pause.grid(row =3,column =1,pady =5)
     btn_pause = Button(ctr_lab,text ="exit",width =10,command = exitit)
     btn_pause.grid(row =4,column =1,pady =5)
-    
 
-  
     
-  
   
     root.mainloop()
 
     
 if __name__=='__main__':
-    mood='not bad'
-    run(mood)
+    mood='sad'
+    username='u'
+    run(mood,username)
