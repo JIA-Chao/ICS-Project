@@ -14,6 +14,8 @@ import json
 import pickle as pkl
 from chat_utils import *
 import chat_group as grp
+import player
+import reporter
 
 
 class Server:
@@ -162,10 +164,18 @@ class Server:
                 ctime = time.strftime('%d.%m.%y,%H:%M', time.localtime())
                 mysend(from_sock, json.dumps(
                     {"action": "time", "results": ctime}))
+                
 # ------MUSIC FUNCTION-------                 
             elif msg['action'] == 'music':
+                from_name = self.logged_sock2name[from_sock]
                 mood=msg['mood']
-                player.run(mood)
+                player.run(mood,from_name)
+
+            elif msg['action'] == 'report':
+                from_name = self.logged_sock2name[from_sock]
+                r=reporter.get_report(from_name)
+                mysend(from_sock, json.dumps(
+                    {"action": "report", "results": r}))
 
 # ------RSA IMPLEMENTATION-------
 # Search cannot work for RSA

@@ -2,14 +2,12 @@
 
 Author: Jingxian Xu
 Reminder: This player only supports windows system
-          
-Hope you enjoy it 
+
 """
 
 from tkinter import *
 from traceback import *
 from win32com.client import Dispatch
-import time,eyed3,threading
 import os
 import pickle as pkl
 
@@ -24,7 +22,7 @@ def run(mood,username,index = [1]):
     filedirs=[]
     global pwd
     pwd=os.getcwd()
-    #if pwd.split('\\')[-1] != mood:
+    
     pwd += "\\" + mood
     print(pwd)
     os.chdir(pwd)
@@ -37,13 +35,18 @@ def run(mood,username,index = [1]):
         for key in refer_d:
             filedirs.append(key)
             dict_path_name[key.split("\\")[-1]] = key
+        for files in os.listdir(pwd):
+            if files.endswith('.mp3'):
+                realdir = os.path.realpath(files)
+                if realdir not in filedirs:
+                    filedirs.append(realdir)
+                    dict_path_name[realdir.split("\\")[-1]]=realdir
+                    record_d[realdir] = 0
+                
     except:
         record_d={}             #store users' reference
         dict_path_name={}       #{filename:filepath}
         name=[]
-        
-        
-    
         for files in os.listdir(pwd):
             if files.endswith('.mp3'):
                 realdir = os.path.realpath(files)
@@ -51,15 +54,15 @@ def run(mood,username,index = [1]):
                 dict_path_name[realdir.split("\\")[-1]]=realdir
                 record_d[realdir] = 0
                 
-    print(pwd,'start PWD1')
+    #print(pwd,'start PWD1')
     l=pwd.split('\\')
     pwd = '\\'.join(l[:-1])
-    print(pwd,'start PWD2')
+    #print(pwd,'start PWD2')
     
     os.chdir(pwd)
     
-    print(dict_path_name)
-    print(filedirs)
+    
+    #print(filedirs)
     print(record_d,'********RECORD_D')
         
     if filedirs:
@@ -68,30 +71,9 @@ def run(mood,username,index = [1]):
             wmp.currentPlaylist.appendItem(media)
             
             print(filedirs[i])
-      
-            coco = eyed3.load(filedirs[i])
-            total = int(coco.info.time_secs)
-            minute = int(coco.info.time_secs)//60
-            sec = int(coco.info.time_secs)%60
-            length = int(coco.info.time_secs)
-      
             
     def play(event = None):
         wmp.controls.play()
-        
-
-    def per():
-        global total
-        while wmp.playState !=1:
-            progress_scal.set(int(wmp.controls.currentPosition))
-            progress_scal.config(label = wmp.controls.currentPositionString)
-            progress_scal.config(to = total,tickinterval = 50)
-            time.sleep(1)
-            root.title("%s" % wmp.currentMedia.name)
-
-
-   
-    
     
     def stop():
         wmp.controls.stop()
@@ -115,10 +97,24 @@ def run(mood,username,index = [1]):
         root.destroy()
         
     def Previous_it():
+        media_dir = wmp.currentMedia.sourceURL
+        media_name = wmp.currentMedia.name
+        cur_pos = wmp.controls.currentPosition
+        dur = wmp.currentMedia.duration
+        if record_d[media_dir] > 0:
+            record_d[media_dir] -= 1
+        elif cur_pos < dur/2 :
+            record_d[media_dir] = -2
+        else:
+            record_d[media_dir] = -1
         wmp.controls.previous()
+        media_dir = wmp.currentMedia.sourceURL
+        record_d[media_dir] += 1
+        print(record_d)
+        
         
     def Next_it():
-        global pwd
+       
         media_dir = wmp.currentMedia.sourceURL
         media_name = wmp.currentMedia.name
         cur_pos = wmp.controls.currentPosition
@@ -132,8 +128,6 @@ def run(mood,username,index = [1]):
             record_d[media_dir] = -1
         
         print(record_d)
-       
-        
         wmp.controls.next()
         
     def Volume_ctr(none):
@@ -164,12 +158,6 @@ def run(mood,username,index = [1]):
         print(record_d)
             
     
-    
-  
-  
-  
-    
-  
     
     
     modee_lab = LabelFrame(root,text = "play control")

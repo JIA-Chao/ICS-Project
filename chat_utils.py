@@ -22,8 +22,9 @@ menu = "\n++++ Choose one of the following commands\n \
         k: to get all public keys\n \
         q: to leave the chat system\n\n \
         m _#_: to play music if you feel <#> \n \
-               For example, you can type 'm not bad' if you feel happy\n \
-              (please choose one mood from 'sad','tired','not bad')\n\n"
+               For example, you can type 'm not bad' if you feel not bad\n \
+              (please choose one mood from 'sad','tired','not bad')\n \
+        r: to get your personalized music report\n\n"     
 
 S_OFFLINE = 0
 S_CONNECTED = 1

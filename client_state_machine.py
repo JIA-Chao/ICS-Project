@@ -143,7 +143,11 @@ class ClientSM:
                         self.out_msg += 'your music is coming soon!'
                     else:
                         self.out_msg += "please choose one mood from 'sad','tired','not bad'"
-                    
+
+                elif my_msg[0] == 'r':
+                    mysend(self.s,json.dumps({'action':'report'}))
+                    report = json.loads(myrecv(self.s))["results"]
+                    self.out_msg += report             
 
 
 # ------RSA IMPLEMENTATION-------
