@@ -6,7 +6,6 @@ Reminder: This player only supports windows system
 """
 
 from tkinter import *
-from traceback import *
 from win32com.client import Dispatch
 import os
 import pickle as pkl
@@ -25,9 +24,8 @@ def run(mood,username,index = [1]):
     
     pwd += "\\" + mood
     print(pwd)
-    os.chdir(pwd)
+    os.chdir(pwd) #point to the folder that has music
     
-    global total,name
     try:
         
         record_d = pkl.load(open(username + '_music.idx','rb'))
@@ -38,7 +36,7 @@ def run(mood,username,index = [1]):
         for files in os.listdir(pwd):
             if files.endswith('.mp3'):
                 realdir = os.path.realpath(files)
-                if realdir not in filedirs:
+                if realdir not in filedirs:  #if music files change, also need to add the new music filename to user record
                     filedirs.append(realdir)
                     dict_path_name[realdir.split("\\")[-1]]=realdir
                     record_d[realdir] = 0
@@ -56,14 +54,14 @@ def run(mood,username,index = [1]):
                 
     #print(pwd,'start PWD1')
     l=pwd.split('\\')
-    pwd = '\\'.join(l[:-1])
+    pwd = '\\'.join(l[:-1])  
     #print(pwd,'start PWD2')
     
-    os.chdir(pwd)
+    os.chdir(pwd)   #go back to player's directory
     
     
     #print(filedirs)
-    print(record_d,'********RECORD_D')
+    #print(record_d,'********RECORD_D')
         
     if filedirs:
         for i in range(len(filedirs)):
@@ -71,6 +69,9 @@ def run(mood,username,index = [1]):
             wmp.currentPlaylist.appendItem(media)
             
             print(filedirs[i])
+            
+
+    """Playing functions"""
             
     def play(event = None):
         wmp.controls.play()
@@ -159,7 +160,7 @@ def run(mood,username,index = [1]):
             
     
     
-    
+    """GUI"""
     modee_lab = LabelFrame(root,text = "play control")
     modee_lab.grid(row =0,column =0,rowspan =4,sticky = "wes")
     var_mode = IntVar()
@@ -199,6 +200,6 @@ def run(mood,username,index = [1]):
 
     
 if __name__=='__main__':
-    mood='sad'
-    username='u'
+    #mood='sad'  #for testing  
+    #username='u'
     run(mood,username)
