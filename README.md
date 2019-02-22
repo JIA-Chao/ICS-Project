@@ -5,4 +5,4 @@ RSA encryption: Jia
 Music player: Sara
 
 As Sara implemented music player based on some libraries only for windows, so for windows users, just download all files and run them.
-For mac users, delete 
+For mac users, delete bad, not bad, happy and player files.
